@@ -1,0 +1,65 @@
+services:
+  postgres:
+   image: postgres:15
+   container_name: nextgen_postgres
+   environment:
+    POSTGRES_USER: nextgen
+    POSTGRES_PASSWORD: nextgen
+    POSTGRES_DB: nextgen_db
+   ports:
+    - "5432:5432"
+   volumes:
+    - pgdata:/var/lib/postgresql/data
+    - ./postgres:/docker-entrypoint-initdb.d
+
+
+  mlflow:
+    build:
+      context: ./mlflow
+      dockerfile: Dockerfile
+    container_name: nextgen_mlflow
+    environment:
+      MLFLOW_BACKEND_STORE_URI: postgresql+psycopg2://nextgen:nextgen@postgres:5432/mlflow_db
+      MLFLOW_DEFAULT_ARTIFACT_ROOT: /mlflow/artifacts
+    depends_on:
+      - postgres
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow_artifacts:/mlflow/artifacts
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: nextgen_api
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - mlflow
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models
+
+  airflow:
+    build:
+      context: ./airflow
+      dockerfile: Dockerfile
+    container_name: nextgen_airflow
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://nextgen:nextgen@postgres:5432/airflow_db
+    depends_on:
+      - postgres
+    ports:
+      - "18080:8080"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./training:/opt/airflow/training
+      - ./models:/opt/airflow/models
+    command: ["airflow", "standalone"]
+
+volumes:
+  pgdata:
+  mlflow_artifacts:
