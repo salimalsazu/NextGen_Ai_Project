@@ -1,65 +1,88 @@
 services:
   postgres:
-   image: postgres:15
-   container_name: nextgen_postgres
-   environment:
-    POSTGRES_USER: nextgen
-    POSTGRES_PASSWORD: nextgen
-    POSTGRES_DB: nextgen_db
-   ports:
-    - "5432:5432"
-   volumes:
-    - pgdata:/var/lib/postgresql/data
-    - ./postgres:/docker-entrypoint-initdb.d
-
+    image: postgres:15
+    environment:
+      POSTGRES_USER: nextgen
+      POSTGRES_PASSWORD: nextgen
+      POSTGRES_DB: nextgen_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nextgen -d nextgen_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   mlflow:
     build:
-      context: ./mlflow
+      context: ./mlflow_server
       dockerfile: Dockerfile
-    container_name: nextgen_mlflow
     environment:
       MLFLOW_BACKEND_STORE_URI: postgresql+psycopg2://nextgen:nextgen@postgres:5432/mlflow_db
       MLFLOW_DEFAULT_ARTIFACT_ROOT: /mlflow/artifacts
+      # Optional; harmless
+      MLFLOW_ENABLE_PROXY_FIX: "true"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     ports:
       - "5000:5000"
     volumes:
-      - mlflow_artifacts:/mlflow/artifacts
+      # Bind-mount so Airflow + MLflow share the same artifact path.
+      - ./mlflow_artifacts:/mlflow/artifacts
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri postgresql+psycopg2://nextgen:nextgen@postgres:5432/mlflow_db
+      --default-artifact-root /mlflow/artifacts
+      --serve-artifacts
+      --allowed-hosts mlflow,mlflow:5000,localhost,localhost:5000,127.0.0.1,127.0.0.1:5000
+      --cors-allowed-origins *
 
   api:
     build:
       context: ./api
       dockerfile: Dockerfile
-    container_name: nextgen_api
     env_file:
       - .env
     depends_on:
-      - postgres
-      - mlflow
+      postgres:
+        condition: service_healthy
+      mlflow:
+        condition: service_started
     ports:
       - "8000:8000"
     volumes:
       - ./models:/app/models
+      - ./mlflow_artifacts:/mlflow/artifacts
 
   airflow:
     build:
       context: ./airflow
       dockerfile: Dockerfile
-    container_name: nextgen_airflow
+    env_file:
+      - .env
     environment:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://nextgen:nextgen@postgres:5432/airflow_db
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      # IMPORTANT: inside docker, use service name (not localhost)
+      MLFLOW_TRACKING_URI: http://mlflow:5000
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     ports:
       - "18080:8080"
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./training:/opt/airflow/training
       - ./models:/opt/airflow/models
+      - ./mlflow_artifacts:/mlflow/artifacts
     command: ["airflow", "standalone"]
 
 volumes:
   pgdata:
-  mlflow_artifacts:

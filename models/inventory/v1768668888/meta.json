@@ -1,0 +1,9 @@
+{
+  "model_group": "inventory",
+  "version": "v1768668888",
+  "saved_at": 1768668888,
+  "meta": {
+    "model_type": "linear_regression_time_index",
+    "metric_mae": 15.972698412698415
+  }
+}

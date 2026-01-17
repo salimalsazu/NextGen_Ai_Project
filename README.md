@@ -18,7 +18,7 @@ It includes:
 NextGen_Retail_AI_Project/
 ├── api/                       # FastAPI service (inference + DB logging)
 ├── airflow/                   # Airflow DAGs (train -> register)
-├── mlflow/                    # MLflow server Dockerfile
+├── mlflow_server/                    # MLflow server Dockerfile
 ├── training/                  # Training scripts (log to MLflow + save local versioned models)
 ├── models/                    # Local model versioning output (auto created at train time)
 ├── docs/                      # Written documents (expand for submission)
@@ -45,7 +45,7 @@ Services:
 - Postgres: `localhost:5432`
 - MLflow: `http://localhost:5000`
 - FastAPI: `http://localhost:8000` (Swagger: `/docs`)
-- Airflow: `http://localhost:8080` (admin/admin)
+- Airflow: `http://localhost:18080` (admin/admin)
 
 ---
 
