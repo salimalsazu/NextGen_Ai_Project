@@ -1,7 +1,7 @@
 {
   "model_group": "pricing",
-  "version": "v1768759001",
-  "saved_at": 1768759001,
+  "version": "v1768758977",
+  "saved_at": 1768758977,
   "meta": {
     "model_type": "linear_regression",
     "metric_mae": 70.17354741182692

@@ -1,7 +1,7 @@
 {
   "model_group": "recommender",
-  "version": "v1768758996",
-  "saved_at": 1768758996,
+  "version": "v1768758972",
+  "saved_at": 1768758972,
   "meta": {
     "model_type": "popularity",
     "k_default": 10,

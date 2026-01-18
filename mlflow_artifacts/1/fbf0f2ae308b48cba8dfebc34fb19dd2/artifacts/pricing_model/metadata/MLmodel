@@ -1,0 +1,25 @@
+artifact_path: pricing_model
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.11.9
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.5.1
+mlflow_version: 2.14.1
+model_size_bytes: 539
+model_uuid: ab3a4c70594a483da6b6d05a542f4ff6
+run_id: fbf0f2ae308b48cba8dfebc34fb19dd2
+signature:
+  inputs: '[{"type": "long", "name": "stock", "required": true}, {"type": "long",
+    "name": "demand", "required": true}]'
+  outputs: '[{"type": "tensor", "tensor-spec": {"dtype": "float64", "shape": [-1]}}]'
+  params: null
+utc_time_created: '2026-01-18 17:56:39.503371'
