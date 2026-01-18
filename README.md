@@ -51,6 +51,41 @@ Services:
 - FastAPI: `http://localhost:8000` (Swagger: `/docs`)
 - Airflow: `http://localhost:18080` (see credentials section below)
 
+## 3) Database TroubleShoot
+
+Create MLflow DB in Postgres:
+
+```bash
+docker exec -it nextgen_ai_project-postgres-1 psql -U nextgen -d postgres -c "CREATE DATABASE mlflow_db;"
+
+docker restart nextgen_ai_project-mlflow-1
+```
+
+Create Airflow metadata DB in Postgres:
+
+```bash
+docker exec -it nextgen_ai_project-postgres-1 psql -U nextgen -d postgres -c "CREATE DATABASE airflow_db;"
+
+
+docker restart nextgen_ai_project-airflow-1
+
+```
+
+Now you have to create the table manually:
+
+```bash
+docker exec -it nextgen_ai_project-postgres-1 psql -U nextgen -d nextgen_db -c "
+CREATE TABLE IF NOT EXISTS inference_logs (
+  id SERIAL PRIMARY KEY,
+  endpoint VARCHAR(50) NOT NULL,
+  request_json JSON NOT NULL,
+  response_json JSON NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS ix_inference_logs_endpoint ON inference_logs(endpoint);
+"
+```
+
 ### Airflow login (Standalone)
 
 This project runs Airflow with:
@@ -91,33 +126,6 @@ docker exec -it nextgen_ai_project-airflow-1 bash -lc "airflow users reset-passw
 After that, log in using **admin/admin**.
 
 ---
-
-## 3) Database Versioning (Alembic)
-
-Inside the **api** container:
-
-```bash
-alembic -c app/db/alembic.ini upgrade head
-```
-
-This creates `inference_logs` table where all API requests/responses are stored.
-
-### If `inference_logs` table is missing (quick fix)
-
-If you see Postgres errors like `relation "inference_logs" does not exist`, you can create the table manually:
-
-```bash
-docker exec -it nextgen_ai_project-postgres-1 psql -U nextgen -d nextgen_db -c "
-CREATE TABLE IF NOT EXISTS inference_logs (
-  id SERIAL PRIMARY KEY,
-  endpoint VARCHAR(50) NOT NULL,
-  request_json JSON NOT NULL,
-  response_json JSON NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-CREATE INDEX IF NOT EXISTS ix_inference_logs_endpoint ON inference_logs(endpoint);
-"
-```
 
 ---
 
