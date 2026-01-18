@@ -226,10 +226,4 @@ curl -X POST http://localhost:8000/chat -H "Content-Type: application/json" -d '
 
 ---
 
-## 7) What to show teacher (screenshots)
-
-- Airflow DAG run page
-- MLflow runs + Model Registry versions
-- FastAPI Swagger `/docs`
-- `models/` folder showing versioned saves
-- Alembic migration file
+Thanks
