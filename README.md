@@ -41,7 +41,7 @@ cp .env.example .env
 ### Step B: Start services
 
 ```bash
-docker compose up --build
+docker compose up -d --build
 ```
 
 Services:
